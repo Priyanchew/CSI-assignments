@@ -62,9 +62,20 @@ def load_model_and_data():
         with open('model_info.pkl', 'rb') as f:
             model_info = pickle.load(f)
         
-        return model, scaler, model_info
-    except FileNotFoundError:
-        st.warning("⚠️ Model files not found. Training model automatically...")
+        # Test if model works with current sklearn version
+        try:
+            # Quick test prediction to check compatibility
+            test_features = [[5.1, 3.5, 1.4, 0.2]]
+            test_scaled = scaler.transform(test_features)
+            _ = model.predict(test_scaled)
+            return model, scaler, model_info
+        except Exception as e:
+            st.warning(f"⚠️ Model version incompatibility detected: {str(e)[:100]}...")
+            st.info("🔄 Retraining model with current scikit-learn version...")
+            raise FileNotFoundError("Version mismatch")
+            
+    except (FileNotFoundError, AttributeError, ImportError) as e:
+        st.warning("⚠️ Model files not found or incompatible. Training model automatically...")
         
         # Auto-train the model
         with st.spinner("Training the model, please wait..."):
@@ -212,6 +223,8 @@ def main():
     st.markdown("""
     This web application uses a **Random Forest machine learning model** to predict the species of iris flowers 
     based on their physical characteristics. Simply adjust the measurements below and get instant predictions!
+    
+    > **Note:** The model is automatically trained on first load to ensure compatibility with the deployment environment.
     """)
     
     # Load model and data (with auto-training if needed)
@@ -219,6 +232,7 @@ def main():
         model, scaler, model_info = load_model_and_data()
     except Exception as e:
         st.error(f"❌ Error loading or training model: {str(e)}")
+        st.info("🔄 Please refresh the page to retry model training.")
         st.stop()
     
     # Sidebar for inputs
@@ -269,11 +283,33 @@ def main():
     col1, col2, col3 = st.sidebar.columns(3)
     
     if col1.button("Setosa Example"):
-        features = [5.1, 3.5, 1.4, 0.2]
+        st.session_state.sepal_length = 5.1
+        st.session_state.sepal_width = 3.5
+        st.session_state.petal_length = 1.4
+        st.session_state.petal_width = 0.2
+        st.rerun()
     if col2.button("Versicolor Example"):
-        features = [6.0, 2.8, 4.5, 1.4]
+        st.session_state.sepal_length = 6.0
+        st.session_state.sepal_width = 2.8
+        st.session_state.petal_length = 4.5
+        st.session_state.petal_width = 1.4
+        st.rerun()
     if col3.button("Virginica Example"):
-        features = [6.5, 3.0, 5.8, 2.2]
+        st.session_state.sepal_length = 6.5
+        st.session_state.sepal_width = 3.0
+        st.session_state.petal_length = 5.8
+        st.session_state.petal_width = 2.2
+        st.rerun()
+    
+    # Get values from session state or use slider values
+    if 'sepal_length' in st.session_state:
+        sepal_length = st.session_state.sepal_length
+    if 'sepal_width' in st.session_state:
+        sepal_width = st.session_state.sepal_width
+    if 'petal_length' in st.session_state:
+        petal_length = st.session_state.petal_length
+    if 'petal_width' in st.session_state:
+        petal_width = st.session_state.petal_width
     
     # Main content area
     col1, col2 = st.columns([1, 1])
