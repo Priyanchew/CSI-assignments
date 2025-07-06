@@ -5,6 +5,8 @@ A machine learning web application built with Streamlit that predicts iris flowe
 ## 🚀 **Live Demo**
 **Try the app now:** [iris-species-predication.streamlit.app](https://iris-species-predication.streamlit.app)
 
+> **Note:** If the deployment is currently failing, please see the troubleshooting section below for Python version compatibility fixes.
+
 ## Features
 
 - **Interactive Web Interface**: Easy-to-use sliders for input
@@ -134,6 +136,17 @@ streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 8501
 - **Error Handling**: Graceful handling of missing model files
 
 ## Troubleshooting
+
+### Streamlit Cloud Deployment Issues
+
+**Python version compatibility error:**
+If you see `ModuleNotFoundError: No module named 'distutils'`, this is due to Python 3.13+ compatibility. The fix is already included:
+- `runtime.txt` specifies Python 3.11
+- Updated `requirements.txt` with compatible package versions
+
+**To redeploy:**
+1. Push the updated files to GitHub
+2. In Streamlit Cloud, click "Reboot app" or redeploy
 
 ### Model files not found
 If you see "Model files not found", run the training script first:

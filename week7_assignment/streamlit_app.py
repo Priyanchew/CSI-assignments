@@ -64,8 +64,65 @@ def load_model_and_data():
         
         return model, scaler, model_info
     except FileNotFoundError:
-        st.error("❌ Model files not found. Please run the training script first!")
-        st.stop()
+        st.warning("⚠️ Model files not found. Training model automatically...")
+        
+        # Auto-train the model
+        with st.spinner("Training the model, please wait..."):
+            model, scaler, model_info = train_model_automatically()
+        
+        st.success("✅ Model trained successfully!")
+        return model, scaler, model_info
+
+def train_model_automatically():
+    """Automatically train the model if files are missing"""
+    from sklearn.datasets import load_iris
+    from sklearn.model_selection import train_test_split
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.preprocessing import StandardScaler
+    
+    # Load the Iris dataset
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+    
+    # Split the data
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
+    
+    # Scale the features
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    
+    # Train Random Forest model
+    model = RandomForestClassifier(
+        n_estimators=100,
+        max_depth=5,
+        random_state=42,
+        min_samples_split=5,
+        min_samples_leaf=2
+    )
+    
+    model.fit(X_train_scaled, y_train)
+    
+    # Create model info
+    model_info = {
+        'feature_names': list(iris.feature_names),
+        'target_names': list(iris.target_names),
+        'model_type': 'Random Forest Classifier'
+    }
+    
+    # Save files for future use
+    try:
+        joblib.dump(model, 'iris_model.pkl')
+        joblib.dump(scaler, 'scaler.pkl')
+        
+        with open('model_info.pkl', 'wb') as f:
+            pickle.dump(model_info, f)
+    except Exception as e:
+        st.info(f"Note: Could not save model files ({e}), but model is loaded in memory.")
+    
+    return model, scaler, model_info
 
 def predict_species(model, scaler, features):
     """Make prediction using the trained model"""
@@ -149,9 +206,6 @@ def create_probability_chart(probabilities, target_names):
 def main():
     """Main Streamlit application"""
     
-    # Load model and data
-    model, scaler, model_info = load_model_and_data()
-    
     # Main header
     st.markdown('<h1 class="main-header">🌸 Iris Species Predictor</h1>', unsafe_allow_html=True)
     
@@ -159,6 +213,13 @@ def main():
     This web application uses a **Random Forest machine learning model** to predict the species of iris flowers 
     based on their physical characteristics. Simply adjust the measurements below and get instant predictions!
     """)
+    
+    # Load model and data (with auto-training if needed)
+    try:
+        model, scaler, model_info = load_model_and_data()
+    except Exception as e:
+        st.error(f"❌ Error loading or training model: {str(e)}")
+        st.stop()
     
     # Sidebar for inputs
     st.sidebar.markdown('<h2 class="sub-header">🔧 Input Features</h2>', unsafe_allow_html=True)
