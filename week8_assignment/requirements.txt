@@ -1,0 +1,12 @@
+langchain_core
+python-dotenv
+streamlit
+langchain_community
+langserve
+bs4
+faiss-cpu
+beautifulsoup4
+wikipedia
+langchainhub
+sentence_transformers
+langchain-huggingface
